@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="afi.MsPacManAFI">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/exec/lib/afi.MsPacManAFI.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
