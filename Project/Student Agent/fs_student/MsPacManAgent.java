@@ -124,6 +124,7 @@ public class MsPacManAgent implements PacManController {
 
 		return score;
 	}
+
 	private int handleNormalBehavior(Game game, int currentPos, int[] possibleDirs) {
 		if (isDangerousGhostNearby(game, currentPos)) {
 			return findSafestDirection(game, currentPos, possibleDirs);
@@ -231,9 +232,8 @@ public class MsPacManAgent implements PacManController {
 			return false;
 		}
 
-		// First check if enough ghosts are out of lair
 		int activeGhosts = countGhostsOutOfLair(game);
-		if (activeGhosts < 2) {  // Need at least 2 active ghosts to make luring worthwhile
+		if (activeGhosts < 2) {
 			return false;
 		}
 
@@ -248,7 +248,6 @@ public class MsPacManAgent implements PacManController {
 		return false;
 	}
 
-	// New method to count ghosts that are out of lair
 	private int countGhostsOutOfLair(Game game) {
 		int count = 0;
 		for (int i = 0; i < 4; i++) {
@@ -259,7 +258,6 @@ public class MsPacManAgent implements PacManController {
 		return count;
 	}
 
-	// Modified method to only count ghosts that are out of lair
 	private int countNearbyActiveGhosts(Game game, int position, int maxDistance) {
 		int count = 0;
 		for (int i = 0; i < 4; i++) {
@@ -273,7 +271,6 @@ public class MsPacManAgent implements PacManController {
 		return count;
 	}
 
-	// Update handlePowerPillLuring to use the new counting method
 	private int handlePowerPillLuring(Game game, int currentPos, int[] possibleDirs) {
 		int nearestPowerPill = findNearestPowerPill(game, currentPos);
 		if (nearestPowerPill == -1) return handleSafeMovement(game, currentPos, possibleDirs);
@@ -281,12 +278,10 @@ public class MsPacManAgent implements PacManController {
 		int activeGhostCount = countNearbyActiveGhosts(game, nearestPowerPill, POWER_PILL_ACTIVATION);
 		int distanceToPowerPill = game.getPathDistance(currentPos, nearestPowerPill);
 
-		// If enough active ghosts are very close, eat the power pill
 		if (activeGhostCount >= 2 && distanceToPowerPill <= 2) {
 			return game.getNextPacManDir(nearestPowerPill, true, Game.DM.PATH);
 		}
 
-		// Otherwise, maintain position near the power pill but don't eat it
 		return maintainPositionNearPowerPill(game, currentPos, nearestPowerPill, possibleDirs);
 	}
 	/**
@@ -317,7 +312,6 @@ public class MsPacManAgent implements PacManController {
 		int bestDir = -1;
 		double bestScore = Double.NEGATIVE_INFINITY;
 
-		// Count nearby dangerous ghosts
 		int nearbyGhosts = countNearbyGhosts(game, powerPillPos, POWER_PILL_ACTIVATION);
 
 		for (int dir : possibleDirs) {
@@ -325,18 +319,14 @@ public class MsPacManAgent implements PacManController {
 			if (nextNode != -1) {
 				int distanceToPill = game.getPathDistance(nextNode, powerPillPos);
 
-				// Stay very close to pill if ghosts are nearby, otherwise maintain safe distance
 				if ((nearbyGhosts >= 2 && distanceToPill <= 2) ||
 						(nearbyGhosts < 2 && distanceToPill < LURE_DISTANCE)) {
 
 					double score = evaluateLuringPosition(game, nextNode, powerPillPos);
 
-					// Add bonus for optimal positions based on ghost proximity
 					if (nearbyGhosts >= 2) {
-						// When ghosts are close, prefer positions very near the pill
 						score += (3 - distanceToPill) * 100.0;
 					} else {
-						// When waiting for ghosts, maintain medium distance
 						score += (LURE_DISTANCE - Math.abs(LURE_DISTANCE/2 - distanceToPill)) * 10.0;
 					}
 
@@ -356,28 +346,22 @@ public class MsPacManAgent implements PacManController {
 	private double evaluateLuringPosition(Game game, int position, int powerPillPos) {
 		double score = 0.0;
 
-		// Consider distance from power pill
 		int distanceToPill = game.getPathDistance(position, powerPillPos);
 
-		// Count nearby ghosts within different ranges
 		int closeGhosts = countNearbyGhosts(game, position, POWER_PILL_ACTIVATION);
 		int luringGhosts = countNearbyGhosts(game, position, LURE_DISTANCE);
 
-		// Higher score for positions that have multiple ghosts nearby
 		score += closeGhosts * 100.0;
 		score += luringGhosts * 50.0;
 
-		// Prefer positions with multiple escape routes
 		if (game.isJunction(position)) {
 			score += 30.0;
 		}
 
-		// Carefully evaluate ghost distances
 		for (int i = 0; i < 4; i++) {
 			if (!game.isEdible(i)) {
 				int ghostDistance = game.getPathDistance(position, game.getCurGhostLoc(i));
 				if (ghostDistance < VERY_DANGEROUS_DISTANCE) {
-					// Still dangerous but less penalty if near power pill
 					score -= (distanceToPill <= 2) ? 250.0 : 500.0;
 				}
 			}
